@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TT Tracker</title>
+</head>
+<body>
+    <header>
+        <h1>TT Tracker</h1>
+    </header>
+
+    <form id="match-frm">
+        <label for="player1">Player 1:</label>
+        <input type="text" name="player1" id="player1"><br><br>
+        <label for="player2">Player 2:</label>
+        <input type="text" name="player2" id="player2"><br><br>
+        <label for="date-time">Date and Time (optional):</label>
+        <input type="datetime-local" name="dateTime" id="dateTime">
+        
+        <!-- Optional sets -->
+        <div id="sets-container"></div>
+        <button type="button" id="add-set-btn">Add Set (+)</button><br><br>
+
+
+        <button type="submit">Add Match</button>
+    </form>
+      
+    <!-- List of all matches -->
+    <ul id="match-list"></ul>
+
+    <script>
+        // Add event listener to add set button
+        document.getElementById('add-set-btn').addEventListener('click', function() {
+          const setsContainer = document.getElementById('sets-container');
+          
+          // Create a new set element and append it to the container
+          const setElement = document.createElement('div');
+          setElement.innerHTML = `
+            <label for="set-points">Set Points:</label>
+            <input type="number" name="setPointsPlayer1" id="setPointsPlayer1">
+            <input type="number" name="setPointsPlayer2" id="setPointsPlayer2"><br><br>
+          `;
+          setsContainer.appendChild(setElement);
+        });
+    </script>
+</body>
+</html>
