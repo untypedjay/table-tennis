@@ -34,13 +34,35 @@
                 <th>Matches</th>
             </tr>
         </thead>
-        <tbody id="match-data"></tbody>
+        <tbody id="games-data"></tbody>
     </table>
 
     <script>
+        const addTableRow = (game) => {
+            console.log(game)
+            let gamesDataTableBody = document.getElementById('games-data');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${game.date}</td>
+                <td>${game.player1_name}</td>
+                <td>${game.player2_name}</td>
+                <td>${game.player1_matches_won}:${game.player2_matches_won}</td>
+                <button class="delete-game-btn">Delete</button>
+            `;
+            gamesDataTableBody.appendChild(row);
+        };
+
+        const games = JSON.parse(localStorage.getItem('games'));
+
+        if (games) {
+            for (const game of games) {
+                addTableRow(game);
+            }
+        }
+
         document.getElementById('add-game-btn').addEventListener('click', function(event) {
             event.preventDefault();
-            const games = [];
+            const games = JSON.parse(localStorage.getItem('games'));
 
             const player1Name = document.getElementById('player1').value;
             const player2Name = document.getElementById('player2').value;
@@ -58,6 +80,7 @@
             };
 
             games.push(game);
+            addTableRow(game);
 
             const fingerprint = {
                 "timestamp": new Date().toISOString(),
@@ -69,7 +92,27 @@
             localStorage.setItem('fingerprint', JSON.stringify(fingerprint));
         });
 
-        const hashString = function(string) {
+        const deleteGameButtons = document.querySelectorAll('.delete-game-btn');
+
+        deleteGameButtons.forEach((button) => {
+            button.addEventListener('click', function() {
+                const gameToDelete = this.parentNode;
+                
+                // Remove the game from local storage and table
+                for (let i = 0; i < games.length; i++) {
+                    if (games[i].date === gameToDelete.children[0].textContent) {
+                        games.splice(i, 1);
+                        localStorage.setItem('games', JSON.stringify(games));
+                        
+                        // Remove the row from the table
+                        gameToDelete.remove();
+                        break;
+                    }
+                }
+            });
+        });
+
+        const hashString = (string) => {
             return string.split("").reduce(function(a, b) {
                 a = ((a << 5) - a) + b.charCodeAt(0);
                 return a & a;
