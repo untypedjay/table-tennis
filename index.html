@@ -1,123 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TT Tracker</title>
-</head>
-<body>
-    <header>
-        <h1>TT Tracker</h1>
-    </header>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>TT Tracker</title>
+    </head>
+    <body>
+        <header>
+            <h1>TT Tracker</h1>
+        </header>
 
-    <form id="match-frm">
-        <label for="player1">Player 1:</label>
-        <input type="text" name="player1" id="player1"><br>
-        <label for="player2">Player 2:</label>
-        <input type="text" name="player2" id="player2"><br>
-        <label for="date-time">Date and Time (optional):</label>
-        <input type="datetime-local" name="dateTime" id="date-time"><br>
-        <label for="player1-won">Player 1 Won:</label>
-        <input type="text" name="player1-won" id="player1-won"><br>
-        <label for="player2-won">Player 2 Won:</label>
-        <input type="text" name="player2-won" id="player2-won"><br>
+        <form id="match-frm">
+            <label for="player1">Player 1:</label>
+            <input type="text" name="player1" id="player1"><br>
+            <label for="player2">Player 2:</label>
+            <input type="text" name="player2" id="player2"><br>
+            <label for="date-time">Date and Time (optional):</label>
+            <input type="datetime-local" name="dateTime" id="date-time"><br>
+            <label for="player1-won">Player 1 Won:</label>
+            <input type="text" name="player1-won" id="player1-won"><br>
+            <label for="player2-won">Player 2 Won:</label>
+            <input type="text" name="player2-won" id="player2-won"><br>
 
-        <button id="add-game-btn">Add</button>
-    </form>
-      
-    <table id="games-table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>P1</th>
-                <th>P2</th>
-                <th>Matches</th>
-            </tr>
-        </thead>
-        <tbody id="games-data"></tbody>
-    </table>
+            <button id="add-game-btn">Add</button>
+        </form>
+        
+        <table id="games-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>P1</th>
+                    <th>P2</th>
+                    <th>Matches</th>
+                </tr>
+            </thead>
+            <tbody id="games-data"></tbody>
+        </table>
 
-    <script>
-        const addTableRow = (game) => {
-            console.log(game)
-            let gamesDataTableBody = document.getElementById('games-data');
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${game.date}</td>
-                <td>${game.player1_name}</td>
-                <td>${game.player2_name}</td>
-                <td>${game.player1_matches_won}:${game.player2_matches_won}</td>
-                <button class="delete-game-btn">Delete</button>
-            `;
-            gamesDataTableBody.appendChild(row);
-        };
+        <button id="download-btn">Create Backup</button>
+        <button id="upload-btn">Import Backup</button>
 
-        const games = JSON.parse(localStorage.getItem('games'));
+        <script>
+            const updateLocalStorage = (games, fingerprint) => {
+                localStorage.setItem('games', JSON.stringify(games));
+                localStorage.setItem('fingerprint', JSON.stringify(fingerprint));
+            };
 
-        if (games) {
-            for (const game of games) {
-                addTableRow(game);
-            }
-        }
+            const addTableRow = (game) => {
+                console.log(game)
+                let gamesDataTableBody = document.getElementById('games-data');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${game.date}</td>
+                    <td>${game.player1_name}</td>
+                    <td>${game.player2_name}</td>
+                    <td>${game.player1_matches_won}:${game.player2_matches_won}</td>
+                    <button class="delete-game-btn">Delete</button>
+                `;
+                gamesDataTableBody.appendChild(row);
+            };
 
-        document.getElementById('add-game-btn').addEventListener('click', function(event) {
-            event.preventDefault();
             const games = JSON.parse(localStorage.getItem('games'));
 
-            const player1Name = document.getElementById('player1').value;
-            const player2Name = document.getElementById('player2').value;
-            const dateTimeValue = document.getElementById('date-time').value;
-            const player1MatchesWon = document.getElementById('player1-won').value;
-            const player2MatchesWon = document.getElementById('player2-won').value;
-
-            // Create the game data object
-            const game = {
-                "date": dateTimeValue || "",
-                "player1_name": player1Name,
-                "player2_name": player2Name,
-                "player1_matches_won": player1MatchesWon,
-                "player2_matches_won": player2MatchesWon
-            };
-
-            games.push(game);
-            addTableRow(game);
-
-            const fingerprint = {
-                "timestamp": new Date().toISOString(),
-                "hash": hashString(JSON.stringify(games))
-            };
-
-            // Store the data in local storage
-            localStorage.setItem('games', JSON.stringify(games));
-            localStorage.setItem('fingerprint', JSON.stringify(fingerprint));
-        });
-
-        const deleteGameButtons = document.querySelectorAll('.delete-game-btn');
-
-        deleteGameButtons.forEach((button) => {
-            button.addEventListener('click', function() {
-                const gameToDelete = this.parentNode;
-                
-                // Remove the game from local storage and table
-                for (let i = 0; i < games.length; i++) {
-                    if (games[i].date === gameToDelete.children[0].textContent) {
-                        games.splice(i, 1);
-                        localStorage.setItem('games', JSON.stringify(games));
-                        
-                        // Remove the row from the table
-                        gameToDelete.remove();
-                        break;
-                    }
+            if (games) {
+                for (const game of games) {
+                    addTableRow(game);
                 }
-            });
-        });
+            }
 
-        const hashString = (string) => {
-            return string.split("").reduce(function(a, b) {
-                a = ((a << 5) - a) + b.charCodeAt(0);
-                return a & a;
-            }, 0);
-        }
-    </script>
-</body>
+            document.getElementById('add-game-btn').addEventListener('click', function(event) {
+                event.preventDefault();
+                const games = JSON.parse(localStorage.getItem('games')) || [];
+
+                const player1Name = document.getElementById('player1').value;
+                const player2Name = document.getElementById('player2').value;
+                const dateTimeValue = document.getElementById('date-time').value;
+                const player1MatchesWon = document.getElementById('player1-won').value;
+                const player2MatchesWon = document.getElementById('player2-won').value;
+
+                // Create the game data object
+                const game = {
+                    "date": dateTimeValue || "",
+                    "player1_name": player1Name,
+                    "player2_name": player2Name,
+                    "player1_matches_won": player1MatchesWon,
+                    "player2_matches_won": player2MatchesWon
+                };
+
+                games.push(game);
+                addTableRow(game);
+
+                const fingerprint = {
+                    "timestamp": new Date().toISOString(),
+                    "hash": hashString(JSON.stringify(games))
+                };
+
+                updateLocalStorage(games, fingerprint);
+            });
+
+            const deleteGameButtons = document.querySelectorAll('.delete-game-btn');
+
+            deleteGameButtons.forEach((button) => {
+                button.addEventListener('click', function() {
+                    const gameToDelete = this.parentNode;
+                    
+                    // Remove the game from local storage and table
+                    for (let i = 0; i < games.length; i++) {
+                        if (games[i].date === gameToDelete.children[0].textContent) {
+                            games.splice(i, 1);
+                            localStorage.setItem('games', JSON.stringify(games));
+                            
+                            // Remove the row from the table
+                            gameToDelete.remove();
+                            break;
+                        }
+                    }
+                });
+            });
+
+            document.getElementById('download-btn').addEventListener('click', function() {
+                const games = JSON.parse(localStorage.getItem('games'));
+                const fingerprint = JSON.parse(localStorage.getItem('fingerprint'));
+                const data = JSON.stringify({ games, fingerprint });
+
+                console.log(games)
+                console.log(data)
+
+                // Create a blob and URL for the download link
+                const blob = new Blob([data], {type: 'application/json'});
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `backup-${fingerprint.timestamp}.json`;
+                a.click();
+
+                // Clean up after the download
+                setTimeout(function() {
+                    window.URL.revokeObjectURL(url);
+                }, 1000);
+            });
+
+            const hashString = (string) => {
+                return string.split("").reduce(function(a, b) {
+                    a = ((a << 5) - a) + b.charCodeAt(0);
+                    return a & a;
+                }, 0);
+            };
+        </script>
+    </body>
 </html>
