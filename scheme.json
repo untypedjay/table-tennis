@@ -1,16 +1,11 @@
 {
-    "matches": [
+    "games": [
         {
             "date": "<YYYY-MM-DD HH:MM:SS>",
             "player1_name": "<player_name>",
             "player2_name": "<player_name>",
-            "sets": [
-                {
-                    "set_number": <integer>,
-                    "points_player1": <integer>,
-                    "points_player2": <integer>
-                }
-            ]
+            "player1_matches_won": <integer>,
+            "player2_matches_won": <integer>,
         }
     ],
     "fingerprint": {
