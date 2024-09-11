@@ -22,7 +22,7 @@
             <label for="player2-won">Player 2 Won:</label>
             <input type="text" name="player2-won" id="player2-won"><br>
 
-            <button id="add-game-btn">Add</button>
+            <button id="add-game-btn" onclick="handleAddGameButton(event)">Add</button>
         </form>
         
         <table id="games-table">
@@ -37,17 +37,21 @@
             <tbody id="games-data"></tbody>
         </table>
 
-        <button id="download-btn">Create Backup</button>
-        <button id="upload-btn">Import Backup</button>
+        <button id="download-btn" onclick="handleDownloadButton()">Create Backup</button>
+        <button id="upload-btn" onclick="handleUploadButton()">Import Backup</button>
 
         <script>
-            const updateLocalStorage = (games, fingerprint) => {
+            const updateLocalStorage = (games) => {
+                const fingerprint = {
+                    "timestamp": new Date().toISOString(),
+                    "hash": hashString(JSON.stringify(games))
+                };
+
                 localStorage.setItem('games', JSON.stringify(games));
                 localStorage.setItem('fingerprint', JSON.stringify(fingerprint));
             };
 
             const addTableRow = (game) => {
-                console.log(game)
                 let gamesDataTableBody = document.getElementById('games-data');
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -55,9 +59,13 @@
                     <td>${game.player1_name}</td>
                     <td>${game.player2_name}</td>
                     <td>${game.player1_matches_won}:${game.player2_matches_won}</td>
-                    <button class="delete-game-btn">Delete</button>
+                    <button class="delete-game-btn" onclick="handleDeleteGameButton()">X</button>
                 `;
                 gamesDataTableBody.appendChild(row);
+
+                  // Re-run the query selector to include newly added rows
+                const deleteGameButtons = Array.from(document.querySelectorAll('.delete-game-btn'));
+                console.log(deleteGameButtons)
             };
 
             const games = JSON.parse(localStorage.getItem('games'));
@@ -68,7 +76,7 @@
                 }
             }
 
-            document.getElementById('add-game-btn').addEventListener('click', function(event) {
+            const handleAddGameButton = event => {
                 event.preventDefault();
                 const games = JSON.parse(localStorage.getItem('games')) || [];
 
@@ -90,41 +98,37 @@
                 games.push(game);
                 addTableRow(game);
 
-                const fingerprint = {
-                    "timestamp": new Date().toISOString(),
-                    "hash": hashString(JSON.stringify(games))
-                };
 
-                updateLocalStorage(games, fingerprint);
-            });
 
-            const deleteGameButtons = document.querySelectorAll('.delete-game-btn');
+                updateLocalStorage(games);
+            };
 
-            deleteGameButtons.forEach((button) => {
-                button.addEventListener('click', function() {
-                    const gameToDelete = this.parentNode;
-                    
-                    // Remove the game from local storage and table
-                    for (let i = 0; i < games.length; i++) {
-                        if (games[i].date === gameToDelete.children[0].textContent) {
-                            games.splice(i, 1);
-                            localStorage.setItem('games', JSON.stringify(games));
-                            
-                            // Remove the row from the table
-                            gameToDelete.remove();
-                            break;
-                        }
+            const handleDeleteGameButton = () => {
+                // Get the row that was clicked to delete
+                const deletedRow = event.target.parentNode;
+
+                // Remove the row from the table
+                deletedRow.remove();
+
+                // Update local storage by removing the game data
+                const games = JSON.parse(localStorage.getItem('games'));
+                for (const [index, game] of games.entries()) {
+                    if (game.date === deletedRow.cells[0].textContent) {
+                        games.splice(index, 1);
+                        break;
                     }
-                });
-            });
+                }
 
-            document.getElementById('download-btn').addEventListener('click', function() {
+                // Update local storage with the updated list of games
+                localStorage.setItem('games', JSON.stringify(games));
+
+                updateLocalStorage(games);
+            };
+
+            const handleDownloadButton = () => {
                 const games = JSON.parse(localStorage.getItem('games'));
                 const fingerprint = JSON.parse(localStorage.getItem('fingerprint'));
                 const data = JSON.stringify({ games, fingerprint });
-
-                console.log(games)
-                console.log(data)
 
                 // Create a blob and URL for the download link
                 const blob = new Blob([data], {type: 'application/json'});
@@ -138,13 +142,17 @@
                 setTimeout(function() {
                     window.URL.revokeObjectURL(url);
                 }, 1000);
-            });
+            };
 
             const hashString = (string) => {
                 return string.split("").reduce(function(a, b) {
                     a = ((a << 5) - a) + b.charCodeAt(0);
                     return a & a;
                 }, 0);
+            };
+
+            const handleUploadButton = () => {
+                // TODO
             };
         </script>
     </body>
