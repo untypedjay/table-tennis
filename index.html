@@ -62,10 +62,6 @@
                     <button class="delete-game-btn" onclick="handleDeleteGameButton()">X</button>
                 `;
                 gamesDataTableBody.appendChild(row);
-
-                  // Re-run the query selector to include newly added rows
-                const deleteGameButtons = Array.from(document.querySelectorAll('.delete-game-btn'));
-                console.log(deleteGameButtons)
             };
 
             const games = JSON.parse(localStorage.getItem('games'));
@@ -97,9 +93,6 @@
 
                 games.push(game);
                 addTableRow(game);
-
-
-
                 updateLocalStorage(games);
             };
 
@@ -152,7 +145,57 @@
             };
 
             const handleUploadButton = () => {
-                // TODO
+                // Get a reference to the input element for uploading files
+                const uploadInput = document.createElement('input');
+                uploadInput.type = 'file';
+                uploadInput.accept = '.json';
+
+                // Add event listener for when file is selected or uploaded
+                uploadInput.addEventListener('change', async (event) => {
+                    if (!uploadInput.files.length) return;
+
+                    try {
+                        const file = uploadInput.files[0];
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            const backupData = JSON.parse(reader.result);
+                            const storedGames = JSON.parse(localStorage.getItem('games'));
+                            const storedFingerprint = localStorage.getItem('fingerprint');
+
+                            // Check if the hash of the uploaded data matches the stored fingerprint
+                            if (hashString(JSON.stringify(backupData.games)) === backupData.fingerprint.hash) {
+                                const gamesDataTableBody = document.getElementById('games-data');
+                                Array.from(gamesDataTableBody.querySelectorAll('tr')).forEach((row) => {
+                                    row.remove();
+                                });
+
+                                for (const game of backupData.games) {
+                                    console.log(game)
+                                    addTableRow(game);
+                                }
+                                updateLocalStorage(backupData.games);
+
+                                alert('Backup successfully imported!');
+                            } else {
+                                alert('Invalid or corrupted backup file.');
+                            }
+
+                            uploadInput.value = '';
+                        };
+                        reader.readAsText(file);
+                    } catch (error) {
+                        console.error(error);
+                        alert('Error importing backup: ' + error.message);
+                    }
+                });
+
+                // Show the input element for uploading files
+                document.body.appendChild(uploadInput);
+
+                // Remove the file input after 5 seconds to prevent multiple uploads
+                setTimeout(() => {
+                    uploadInput.remove();
+                }, 5000);
             };
         </script>
     </body>
